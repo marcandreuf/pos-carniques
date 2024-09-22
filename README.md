@@ -103,3 +103,13 @@ Password    :123
 ### Screenshots Client Mobile Mode
 <img src="https://user-images.githubusercontent.com/95122515/221466837-74f53ddc-46b7-4e69-89f8-e87469ffa603.png" width="25%"> <img src="https://user-images.githubusercontent.com/95122515/221466858-fb152ca9-96ef-43cd-b7c9-8c630292ed8f.png" width="24%"> <img src="https://user-images.githubusercontent.com/95122515/221467226-907c5cd8-93d7-4970-a1af-cbae5a2cdf03.png" width="25%"> <img src="https://user-images.githubusercontent.com/95122515/221467250-5bd5fc25-356b-4bde-8877-51f84100f2a9.png" width="24%"> 
 
+# Docker compose
+
+```bash
+cd docker
+
+docker compose --env-file ../backend/.env up
+
+docker compose --env-file ../backend/.env down
+```
+

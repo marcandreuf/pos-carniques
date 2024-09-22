@@ -24,6 +24,6 @@ pnpm --version && tsc --version
 
 WORKDIR /workspace
 
-#CMD ["/bin/sh", "-c", "pnpm i && pnpm start"]
-CMD ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
+CMD ["/bin/sh", "-c", "pnpm i && pnpm start"]
+#CMD ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
 

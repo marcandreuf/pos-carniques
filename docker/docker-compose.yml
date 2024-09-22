@@ -7,6 +7,8 @@ services:
     restart: always
       # set shared memory limit when using docker-compose
     shm_size: 128mb
+    env_file:
+      - ../backend/.env
       # or set shared memory limit when deploy via swarm stack
       #volumes:
       #  - type: tmpfs
@@ -14,15 +16,16 @@ services:
       #    tmpfs:
       #      size: 134217728 # 128*2^20 bytes = 128Mb
     environment:
-      POSTGRES_PASSWORD: ${DB_PASS}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PASSWORD: 'e1x2m3p4l5!'
+      POSTGRES_USER: 'postgres'
+      POSTGRES_DB: 'posdb'
+    user: postgres
     ports:
-      - ${DB_PORT}:5432
+      - 5432:5432
     volumes:
       - pos-carniques-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]  # Command to check if PostgreSQL is ready
+      test: ["CMD", "pg_isready", "-U", "postgres"]  # Command to check if PostgreSQL is ready
       interval: 10s                                   # Time between health checks
       timeout: 5s                                    # Time to wait for the check to succeed
       retries: 5                                     # Number of retries before marking as unhealthy
@@ -32,52 +35,60 @@ services:
     image: adminer
     restart: always
     ports:
-      - 8080:8080
+      - 8081:8080
     depends_on:
       postgres:
         condition: service_healthy
 
   backend_dev_server:
     env_file:
-      - .env
+      - ../backend/.env
     build:
       context: .
-      dockerfile: ../docker/dockerfile-dev-server
+      dockerfile: dockerfile-dev-server
     image: pos-carniques-backend-dev-server-img
     container_name: pos-carniques-dev-server-container
     volumes:
-      - ./:/workspace
+      - ../backend:/workspace
+      - ${HOME}/.local/share/pnpm:/home/node/.local/share/pnpm:cached
     ports:
-      - '${PORT}:${PORT}'
+      - '3000:3000'
     environment:
       - POSTGRESS_DB_HOST=http://postgres:${DB_PORT}
+    # TODO. Find a health check test that works.
     # healthcheck:
-    #   test: [ "CMD-SHELL", "pgrep next-server && echo 'Dev server is running...' || exit 1" ]
+    #   test: [ "CMD-SHELL", "curl -f -I https://127.0.0.1:3000 && echo 'Backend service is healthy.' || exit 1" ]
     #   interval: 30s
     #   timeout: 10s
     #   retries: 3
     #   start_period: 20s
+    depends_on:
+      postgres:
+        condition: service_healthy
 
-  # web:
-  #   env_file:
-  #     - .env
-  #   build:
-  #     context: .
-  #     dockerfile: dockerfile-web
-  #   image: ${APP}-webapp-img
-  #   container_name: ${APP}-web-container
-  #   user: node
-  #   ports:
-  #     - '${WEB_PORT}:${WEB_PORT}'
-  #   environment:
-  #     - BACKEND_API_URL=http://backend_dev_server:${PORT}
-  #   volumes:
-  #     - ../../frontend:/workspace/frontend:cached
-  #     - ${HOME}/.local/share/pnpm:/home/node/.local/share/pnpm:cached
-  #   command: /bin/sh -c "while sleep 1000; do :; done"
-  #   depends_on:
-  #     backend_dev_server:
-  #       condition: service_healthy
+  web:
+    env_file:
+      - ../frontend/.env
+    build:
+      context: .
+      dockerfile: dockerfile-web
+    image: pos-carniques-webapp-img
+    container_name: pos-carniques-web-container
+    user: node
+    ports:
+      - '5173:5173'
+      - '4173:4173'
+      - '80:80'
+      - '8080:8080'
+    environment:
+      - VITE_APP_BASE_API=http://backend_dev_server:3000
+    volumes:
+      - ../frontend:/workspace
+      - ${HOME}/.local/share/pnpm:/home/node/.local/share/pnpm:cached
+    command: /bin/sh -c "echo 'web service up' && while sleep 1000; do :; done"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   pos-carniques-postgres-data:

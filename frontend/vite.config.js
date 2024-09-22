@@ -14,6 +14,8 @@ export default defineConfig(({ command, mode }) => ({
     },
   },
   server: {
+    port: 5173,       // Specify the port
+    host: '0.0.0.0',  // Listen on all interfaces
     https: {
       // ...
       // Konfigurasi HTTPS sesuai kebutuhan Anda
