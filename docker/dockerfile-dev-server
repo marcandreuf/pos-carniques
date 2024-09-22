@@ -1,8 +1,5 @@
 FROM node:22-bookworm
 
-ARG ARG_PORT=8282
-
-
 RUN apt update && apt upgrade -y && \
 apt clean && \
 rm -rf /var/lib/apt/lists/*
@@ -25,8 +22,8 @@ pnpm config set store-dir "${PNPM_HOME}/store" && \
 pnpm install -g typescript && \
 pnpm --version && tsc --version
 
-WORKDIR /workspace/backend
+WORKDIR /workspace
 
-EXPOSE ${ARG_PORT}
+#CMD ["/bin/sh", "-c", "pnpm i && pnpm start"]
+CMD ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
 
-CMD ["/bin/sh", "-c", "pnpm i && pnpm start"]

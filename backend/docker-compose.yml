@@ -1,0 +1,84 @@
+name: pos-carniques-env
+
+services:
+
+  postgres:
+    image: postgres
+    restart: always
+      # set shared memory limit when using docker-compose
+    shm_size: 128mb
+      # or set shared memory limit when deploy via swarm stack
+      #volumes:
+      #  - type: tmpfs
+      #    target: /dev/shm
+      #    tmpfs:
+      #      size: 134217728 # 128*2^20 bytes = 128Mb
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - ${DB_PORT}:5432
+    volumes:
+      - pos-carniques-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]  # Command to check if PostgreSQL is ready
+      interval: 10s                                   # Time between health checks
+      timeout: 5s                                    # Time to wait for the check to succeed
+      retries: 5                                     # Number of retries before marking as unhealthy
+      start_period: 30s                              # Initial wait time before starting health checks
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend_dev_server:
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: ../docker/dockerfile-dev-server
+    image: pos-carniques-backend-dev-server-img
+    container_name: pos-carniques-dev-server-container
+    volumes:
+      - ./:/workspace
+    ports:
+      - '${PORT}:${PORT}'
+    environment:
+      - POSTGRESS_DB_HOST=http://postgres:${DB_PORT}
+    # healthcheck:
+    #   test: [ "CMD-SHELL", "pgrep next-server && echo 'Dev server is running...' || exit 1" ]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 20s
+
+  # web:
+  #   env_file:
+  #     - .env
+  #   build:
+  #     context: .
+  #     dockerfile: dockerfile-web
+  #   image: ${APP}-webapp-img
+  #   container_name: ${APP}-web-container
+  #   user: node
+  #   ports:
+  #     - '${WEB_PORT}:${WEB_PORT}'
+  #   environment:
+  #     - BACKEND_API_URL=http://backend_dev_server:${PORT}
+  #   volumes:
+  #     - ../../frontend:/workspace/frontend:cached
+  #     - ${HOME}/.local/share/pnpm:/home/node/.local/share/pnpm:cached
+  #   command: /bin/sh -c "while sleep 1000; do :; done"
+  #   depends_on:
+  #     backend_dev_server:
+  #       condition: service_healthy
+
+volumes:
+  pos-carniques-postgres-data:
+    driver: local
