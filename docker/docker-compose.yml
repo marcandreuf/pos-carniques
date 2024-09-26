@@ -85,6 +85,7 @@ services:
     volumes:
       - ../frontend:/workspace
       - ${HOME}/.local/share/pnpm:/home/node/.local/share/pnpm:cached
+    #For debugging I just start the container and shell into it to run the npm run dev and other dev commands.
     command: /bin/sh -c "echo 'web service up' && while sleep 1000; do :; done"
     depends_on:
       postgres:
